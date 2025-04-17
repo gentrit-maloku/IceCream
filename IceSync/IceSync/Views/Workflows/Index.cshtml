@@ -9,6 +9,7 @@
             <th>Name</th>
             <th>Is Active</th>
             <th>Multi Exec Behavior</th>
+            <th>Run workflow</th>
         </tr>
     </thead>
     <tbody>
@@ -19,7 +20,57 @@
                 <td>@workflow.Name</td>
                 <td>@workflow.IsActive</td>
                 <td>@workflow.MultiExecBehavior</td>
+                <td>
+                    <button class="btn btn-primary run-workflow" data-id="@workflow.Id">Run</button>
+                </td>
             </tr>
         }
     </tbody>
 </table>
+
+<div id="alertContainer" style="display:none;" class="alert" role="alert"></div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $(".run-workflow").click(function () {
+                const workflowId = $(this).data('id');
+
+                const params = new URLSearchParams();
+                params.append('id', workflowId);
+
+                axios.post('@Url.Action("Run", "Workflows")', params)
+                    .then(function (response) {
+                        debugger;
+                        const isSuccess = response.data === true;
+                        const alert = $("#alertContainer");
+
+                        alert
+                            .removeClass("alert-success alert-danger")
+                            .addClass(isSuccess ? "alert-success" : "alert-danger")
+                            .text(isSuccess ? "Workflow ran successfully!" : "Error running the workflow.")
+                            .fadeIn();
+
+                        setTimeout(() => {
+                            alert.fadeOut();
+                        }, 3000);
+                    })
+                    .catch(function (error) {
+                        debugger;
+                        const message = error.response?.data?.error || "Something went wrong. Please try again.";
+
+                        $("#alertContainer")
+                            .removeClass("alert-success")
+                            .addClass("alert-danger")
+                            .text(message)
+                            .fadeIn();
+
+                        setTimeout(() => {
+                            $("#alertContainer").fadeOut();
+                        }, 3000);
+                    });
+            });
+        });
+    </script>
+}

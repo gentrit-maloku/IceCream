@@ -15,5 +15,23 @@ namespace IceSync.Controllers
 
             return View(response.Value);
         }
+
+        /// <summary>
+        /// Executes the specified workflow by its ID.
+        /// </summary>
+        /// <param name="id">The ID of the workflow to run.</param>
+        /// <returns>
+        /// Returns HTTP 200 OK with `true` if successful, otherwise HTTP 400 Bad Request with the first error message.
+        /// </returns>
+        [HttpPost]
+        public async Task<IActionResult> Run(int id)
+        {
+            var result = await universalLoader.RunWorkflowAsync(id);
+
+            if (result.IsSuccess)
+                return Ok(true);
+
+            return BadRequest(result.Errors.First().Message);
+        }
     }
 }

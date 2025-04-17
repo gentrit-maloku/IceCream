@@ -25,6 +25,21 @@ namespace IceSync.Services
             return HandleApiResponse(response);
         }
 
+        public async Task<Result<bool>> RunWorkflowAsync(int workflowId)
+        {
+            var tokenResult = await GetTokenAsync();
+
+            if (tokenResult.IsFailed)
+                return Result.Fail<bool>(tokenResult.Errors.First().Message);
+
+            var response = await externalApi.RunWorkflowAsync(workflowId, tokenResult.Value);
+
+            if (!response.IsSuccessStatusCode)
+                return Result.Fail<bool>(response.Error.Content);
+
+            return Result.Ok();
+        }
+
         private readonly AuthenticationRequest _authRequest = new()
         {
             ApiCompanyId = options.Value.ApiCompanyId,

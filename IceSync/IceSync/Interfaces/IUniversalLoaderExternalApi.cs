@@ -12,5 +12,8 @@ namespace IceSync.Interfaces
 
         [Get("/workflows")]
         Task<ApiResponse<List<Workflow>>> GetWorkflowsAsync([Header("Authorization")] string bearerToken);
+
+        [Post("/workflows/{workflowId}/run")]
+        Task<ApiResponse<string>> RunWorkflowAsync(int workflowId, [Header("Authorization")] string bearerToken);
     }
 }
