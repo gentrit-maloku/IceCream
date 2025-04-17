@@ -20,7 +20,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Restore dependencies
-      run: dotnet restore IceSync.sln
+      run: dotnet restore IceSync/IceSync.sln
 
     - name: Build
-      run: dotnet build IceSync.sln --no-restore --configuration Release
+      run: dotnet build IceSync/IceSync.sln --no-restore --configuration Release
