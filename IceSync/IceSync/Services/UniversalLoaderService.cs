@@ -6,7 +6,6 @@ using IceSync.Models.Requests;
 using IceSync.Models.Responses;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
-using Refit;
 using System.Text.Json;
 
 namespace IceSync.Services
@@ -22,7 +21,10 @@ namespace IceSync.Services
 
             var response = await externalApi.GetWorkflowsAsync(tokenResult.Value);
 
-            return HandleApiResponse(response);
+            if (!response.IsSuccessStatusCode)
+                return Result.Fail(response.Error?.Message ?? "Unknown error");
+
+            return Result.Ok(response.Content!);
         }
 
         public async Task<Result<bool>> RunWorkflowAsync(int workflowId)
@@ -87,14 +89,6 @@ namespace IceSync.Services
             await cache.SetStringAsync(Constants.TokenCacheKey, json, options);
 
             return Result.Ok($"{response.Content.TokenType} {response.Content.Token}");
-        }
-
-        private static Result<T> HandleApiResponse<T>(ApiResponse<T> response)
-        {
-            if (!response.IsSuccessStatusCode)
-                return Result.Fail<T>(response.Error?.Message ?? "Unknown error");
-
-            return Result.Ok(response.Content!);
         }
     }
 }
