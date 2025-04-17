@@ -1,24 +1,28 @@
 ﻿using FluentResults;
-using IceSync.Common;
 using IceSync.Interfaces;
+using IceSync.Common;
 using IceSync.Models;
 using IceSync.Models.Requests;
+using IceSync.Models.Responses;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using Refit;
+using System.Text.Json;
 
 namespace IceSync.Services
 {
-    public sealed class UniversalLoaderService(IUniversalLoaderExternalApi externalApi, IOptions<UniversalLoaderApiSettings> options) : IUniversalLoaderService
+    public sealed class UniversalLoaderService(IUniversalLoaderExternalApi externalApi, IOptions<UniversalLoaderApiSettings> options, IDistributedCache cache) : IUniversalLoaderService
     {
         public async Task<Result<List<Workflow>>> GetWorkflowsAsync()
         {
-            var authRequest = GetAuthRequest();
-            var authResponse = await externalApi.AuthenticateAsync(authRequest);
+            var tokenResult = await GetTokenAsync();
 
-            string token = $"{authResponse.Content!.TokenType} {authResponse.Content.Token}";
+            if (tokenResult.IsFailed)
+                return Result.Fail<List<Workflow>>(tokenResult.Errors.First().Message);
 
-            var response = await externalApi.GetWorkflowsAsync(token);
+            var response = await externalApi.GetWorkflowsAsync(tokenResult.Value);
 
-            return Result.Ok(response.Content!);
+            return HandleApiResponse(response);
         }
 
         private readonly AuthenticationRequest _authRequest = new()
@@ -28,6 +32,54 @@ namespace IceSync.Services
             ApiUserSecret = options.Value.ApiUserSecret
         };
 
-        public AuthenticationRequest GetAuthRequest() => _authRequest;
+        private AuthenticationRequest GetAuthRequest() => _authRequest;
+
+        private async Task<Result<string>> GetTokenAsync()
+        {
+            var cachedJson = await cache.GetStringAsync(Constants.TokenCacheKey);
+
+            if (!string.IsNullOrEmpty(cachedJson))
+            {
+                var cached = JsonSerializer.Deserialize<AuthenticationResponse>(cachedJson);
+
+                if (cached != null && cached.ExpiresOn > DateTimeOffset.UtcNow)
+                    return Result.Ok($"{cached.TokenType} {cached.Token}");
+            }
+
+            var request = GetAuthRequest();
+            var response = await externalApi.AuthenticateAsync(request);
+
+            if (!response.IsSuccessStatusCode || response.Content == null)
+                return Result.Fail(response.Error!.Message);
+
+            var timeToExpireToken = response.Content.ExpiresIn - 30;
+            var expiresOn = DateTimeOffset.UtcNow.AddSeconds(timeToExpireToken);
+
+            var newToken = new AuthenticationResponse
+            {
+                TokenType = response.Content.TokenType,
+                Token = response.Content.Token,
+                ExpiresIn = response.Content.ExpiresIn,
+                ExpiresOn = expiresOn
+            };
+
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpiration = expiresOn
+            };
+
+            var json = JsonSerializer.Serialize(newToken);
+            await cache.SetStringAsync(Constants.TokenCacheKey, json, options);
+
+            return Result.Ok($"{response.Content.TokenType} {response.Content.Token}");
+        }
+
+        private static Result<T> HandleApiResponse<T>(ApiResponse<T> response)
+        {
+            if (!response.IsSuccessStatusCode)
+                return Result.Fail<T>(response.Error?.Message ?? "Unknown error");
+
+            return Result.Ok(response.Content!);
+        }
     }
 }
