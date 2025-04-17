@@ -12,5 +12,7 @@ namespace IceSync.Models.Responses
 
         [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
+
+        public DateTimeOffset ExpiresOn { get; set; }
     }
 }

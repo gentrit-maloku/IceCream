@@ -26,7 +26,7 @@ builder.Services.AddRefitClient<IUniversalLoaderExternalApi>()
 builder.Services.AddScoped<IUniversalLoaderService, UniversalLoaderService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString")));
-
+builder.Services.AddDistributedMemoryCache();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
