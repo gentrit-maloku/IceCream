@@ -1,0 +1,25 @@
+﻿@model List<IceSync.Models.Workflow>
+
+<h1>Workflows</h1>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Workflow Id</th>
+            <th>Name</th>
+            <th>Is Active</th>
+            <th>Multi Exec Behavior</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var workflow in Model)
+        {
+            <tr>
+                <td>@workflow.Id</td>
+                <td>@workflow.Name</td>
+                <td>@workflow.IsActive</td>
+                <td>@workflow.MultiExecBehavior</td>
+            </tr>
+        }
+    </tbody>
+</table>
