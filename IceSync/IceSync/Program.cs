@@ -48,7 +48,7 @@ builder.Services.AddQuartz(q =>
         .ForJob(jobKey)
         .WithIdentity("WorkflowSyncJob-trigger")
         .WithSimpleSchedule(x => x
-            .WithInterval(TimeSpan.FromSeconds(30))
+            .WithInterval(TimeSpan.FromMinutes(30))
             .RepeatForever()));
 });
 
