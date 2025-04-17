@@ -8,12 +8,12 @@ namespace IceSync.Controllers
         /// <summary>
         /// Displays the list of available workflows.
         /// </summary>
-        /// <returns>A list of workflow data from external Api.</returns>
+        /// <returns>A view displaying workflow data.</returns>
         public async Task<IActionResult> Index()
         {
             var response = await universalLoader.GetWorkflowsAsync();
 
-            return Ok(response.Value);
+            return View(response.Value);
         }
     }
 }
