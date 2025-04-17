@@ -25,7 +25,7 @@
 
 ## Technologies Used
 
-- **.NET 8.0**: Long term support of .NET for the Web App.
+- **.NET 8.0**: Long term support.
 - **SQL Server**: Database to store workflows.
 - **Quartz**: Background job scheduler to sync workflows periodically.
 - **Refit**: A library for easier consumption of REST APIs, used to interact with the Universal Loader API.
